@@ -2,16 +2,11 @@ import * as cdk from 'aws-cdk-lib';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import { Construct } from 'constructs';
+import { HOSTED_ZONES } from './hosted-zones';
 
 export interface CertStackProps extends cdk.StackProps {
   deployEnv: 'sandbox' | 'prod';
 }
-
-// Hosted zone IDs shared across all nakomis projects.
-const HOSTED_ZONES = {
-  sandbox: { hostedZoneId: 'Z03586633NXU18LFL0JTL', zoneName: 'sandbox.nakomis.com' },
-  prod:    { hostedZoneId: 'Z019437529YGFB53BDUGR', zoneName: 'nakomis.com' },
-};
 
 export class CertStack extends cdk.Stack {
   readonly certificate: acm.Certificate;
@@ -24,7 +19,8 @@ export class CertStack extends cdk.Stack {
     const { deployEnv } = props;
     const { hostedZoneId, zoneName } = HOSTED_ZONES[deployEnv];
 
-    // api.lapcat.{zoneName} — no web SPA, so there is no bare lapcat.{zoneName} domain.
+    // api.lapcat.{zoneName}. The web portal's lapcat.{zoneName} cert lives in
+    // WebCertStack, because CloudFront needs it in us-east-1.
     this.appDomain = `api.lapcat.${zoneName}`;
 
     this.zone = route53.HostedZone.fromHostedZoneAttributes(this, 'Zone', {

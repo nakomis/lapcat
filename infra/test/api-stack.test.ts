@@ -86,6 +86,23 @@ describe('ApiStack — sandbox', () => {
     });
   });
 
+  test('authoriser accepts both the iOS client and the web portal client', () => {
+    const authorizers = template.findResources('AWS::ApiGatewayV2::Authorizer');
+    const [authorizer] = Object.values(authorizers) as {
+      Properties: { JwtConfiguration: { Audience: unknown[] } };
+    }[];
+    const audience = authorizer.Properties.JwtConfiguration.Audience;
+    expect(audience).toHaveLength(2);
+    // iOS client: a Ref to the UserPoolClient in this stack.
+    const [iosClientLogicalId] = Object.keys(template.findResources('AWS::Cognito::UserPoolClient'));
+    expect(audience).toContainEqual({ Ref: iosClientLogicalId });
+    // Web client: resolved from SSM by name (published by WebStack).
+    const params = template.toJSON().Parameters as Record<string, { Default?: string }>;
+    const webParam = Object.entries(params).find(([, p]) => p.Default === '/lapcat/sandbox/web/client-id');
+    expect(webParam).toBeDefined();
+    expect(audience).toContainEqual({ Ref: webParam![0] });
+  });
+
   test('routes are protected by the JWT authorizer', () => {
     template.hasResourceProperties('AWS::ApiGatewayV2::Route', {
       RouteKey: 'GET /swims',

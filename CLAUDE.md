@@ -23,7 +23,15 @@ Plane project: `LAPC` (https://plane.home.nakomis.com). Branches/PRs carry the r
 - **Distribution** — TestFlight only, via `fastlane beta` in `apple/fastlane`, run locally (Recipator pattern). Config (API URL, Cognito client id/domain) is per-build-configuration in `project.yml` → Info.plist.
 - **Versioning** — shared deployment tracker (`nakomis-deployments`, project key `lapcat`). CI computes the version once per merge, deploys it to sandbox then prod, and publishes it to SSM `/lapcat/{env}/version`; `fastlane beta` stamps `MARKETING_VERSION` from `/lapcat/prod/version`, build number = commit count. Bump with `--bump-minor`/`--bump-major` in the PR description.
 - **Submersion entitlement** — build setting `LAPCAT_SUBMERSION` (default `NO`) picks the entitlements file and Swift flag; see `apple/README.md`.
-- **Web dashboard (planned, LAPC-12)** — `lapcat.nakomis.com`, nakostat stack and styling, same API.
+- **Web portal (LAPC-12)** — `lapcat.nakomis.com` / `lapcat.sandbox.nakomis.com`. Login-only today (graphs later).
+  Vite + React 19 + Tailwind 4 + shadcn `ui/` + Biome + Vitest (pnpm) in `web/`, nakostat look and feel.
+  `LapcatWebCertStack` (us-east-1 cert) + `LapcatWebStack` (private S3 + OAC, CloudFront with a viewer-request
+  SPA-rewrite function and **no** `errorResponses`, Route53, Cognito client `lapcat-web-{env}` + One Dark managed
+  login branding). SSM `/lapcat/{env}/web/{client-id,user-pool-id,login-domain,bucket,distribution-id}`.
+  The API's JWT authoriser accepts both the iOS and web client ids; ApiStack reads the web client id from SSM,
+  so `LapcatWebStack` deploys first. The SPA sends the **ID token** (access tokens carry no `email`).
+  Config: `web/scripts/set-config.sh <sandbox|prod|localhost>` → `src/config/config.json` (gitignored).
+  Footer version comes from `src/version.json`, overwritten by CI with the tracker version.
 - **Reference implementations** — `~/repos/nakomis/nakostat` (CI/CD, Cognito, web) and `~/repos/nakomis/recipator` (iOS app, fastlane, Cognito PKCE).
 
 ## AWS credentials
@@ -37,11 +45,13 @@ Plane project: `LAPC` (https://plane.home.nakomis.com). Branches/PRs carry the r
 |---|---|
 | `apple/` | XcodeGen project: `LapcatWatch/`, `LapcatPhone/`, `LapcatShared/` (local Swift package: swim model, JSON, sync, API client, uploader), tests, `fastlane/` |
 | `infra/` | CDK app, Lambdas, tests |
+| `web/` | Web portal (Vite/React SPA) |
 | `docs/` | Logo (`logo.png`, `logo-candidates/`), architecture diagrams |
 
 ## Testing
 
 - Infra: `cd infra && pnpm test` (Jest, 70% coverage minimum)
+- Web: `cd web && pnpm lint && pnpm typecheck && pnpm test && pnpm build` (Vitest, 70% line coverage minimum). Needs `src/config/config.json` — copy the template or run `scripts/set-config.sh localhost`; `pnpm dev` serves on port 3000 (the Cognito localhost callback)
 - Apple: `cd apple/LapcatShared && swift test`, then `cd apple && xcodegen generate && xcodebuild test -project Lapcat.xcodeproj -scheme "Lapcat (Sandbox)" -destination 'platform=iOS Simulator,name=iPhone 17' CODE_SIGNING_ALLOWED=NO` (or `fastlane test`)
 - Lap detection itself can only be verified on a real watch in a real pool.
 
