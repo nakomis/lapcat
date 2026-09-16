@@ -1,0 +1,7 @@
+dist/
+cdk.out/
+cdk-deploy.out/
+cdk-synth.out/
+node_modules/
+coverage/
+*.js.map

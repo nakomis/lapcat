@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "swimId": "0b0e2c34-0000-4000-8000-000000000001",
+  "startDate": "2026-09-19T08:30:00.000+01:00",
+  "endDate": "2026-09-19T08:31:00Z",
+  "poolLength": {"value": 25, "unit": "yd"},
+  "totals": {"lapCount": 0, "distanceMetres": 0, "activeDurationSeconds": 0, "elapsedDurationSeconds": 60},
+  "laps": [],
+  "segments": [],
+  "pauses": [],
+  "heartRate": [],
+  "device": {"model": "Watch7,12", "osVersion": "27.0", "appVersion": "1.0 (1)"}
+}

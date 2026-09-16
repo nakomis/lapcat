@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<!-- Used only when LAPCAT_SUBMERSION = YES. Requires Apple to have granted the shallow-depth
+     entitlement to com.nakomis.lapcat.watchkitapp (LAPC-10); signing fails otherwise. -->
+<dict>
+	<key>com.apple.developer.healthkit</key>
+	<true/>
+	<key>com.apple.developer.healthkit.access</key>
+	<array/>
+	<key>com.apple.developer.submerged-shallow-depth-and-pressure</key>
+	<true/>
+</dict>
+</plist>
