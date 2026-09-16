@@ -60,16 +60,16 @@ targets:
                 # Sandbox values. Client ids come from SSM /lapcat/{env}/cognito/client-id
                 # (created by infra/); replace the REPLACE_ placeholders once deployed.
                 LapcatApiBaseURL: https://api.lapcat.sandbox.nakomis.com
-                LapcatCognitoClientID: REPLACE_WITH_SSM_lapcat_sandbox_cognito_client_id
+                LapcatCognitoClientID: 3pfl8p7f5l7h2h573mgptdqh25
                 LapcatCognitoLoginDomain: login.sandbox.nakomis.com
             configs:
                 Debug Production:
                     LapcatApiBaseURL: https://api.lapcat.nakomis.com
-                    LapcatCognitoClientID: REPLACE_WITH_SSM_lapcat_prod_cognito_client_id
+                    LapcatCognitoClientID: 2n907f2mo7m309sh4ebe94881n
                     LapcatCognitoLoginDomain: login.nakomis.com
                 Release Production:
                     LapcatApiBaseURL: https://api.lapcat.nakomis.com
-                    LapcatCognitoClientID: REPLACE_WITH_SSM_lapcat_prod_cognito_client_id
+                    LapcatCognitoClientID: 2n907f2mo7m309sh4ebe94881n
                     LapcatCognitoLoginDomain: login.nakomis.com
         dependencies:
             - target: LapcatWatch
