@@ -1,0 +1,36 @@
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+DerivedData/
+*.ipa
+*.dSYM.zip
+.DS_Store
+
+# Swift Package Manager
+.build/
+Package.resolved
+
+# Build artefacts
+build/
+
+# fastlane
+apple/fastlane/report.xml
+apple/fastlane/test_output/
+apple/fastlane/README.md
+
+# Secrets — never commit
+apple/Shared/Config/Secrets.swift
+
+# Planning
+PLAN.md
+
+# Node / CDK
+node_modules/
+cdk.out/
+*.out/
+dist/
+
+# Coverage
+coverage/
+lcov.info
