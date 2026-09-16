@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "swimId": "6f1c2b3a-9d4e-4f5a-8b7c-1234567890ab",
+  "startDate": "2026-09-19T08:30:00.000Z",
+  "endDate": "2026-09-19T09:00:00.000Z",
+  "poolLength": {"value": 25, "unit": "m"},
+  "totals": {
+    "lapCount": 2,
+    "distanceMetres": 50,
+    "activeDurationSeconds": 1500,
+    "elapsedDurationSeconds": 1800,
+    "strokeCount": 45,
+    "activeEnergyKcal": 350.5
+  },
+  "laps": [
+    {"index": 0, "startDate": "2026-09-19T08:30:05.250Z", "endDate": "2026-09-19T08:30:43.450Z", "durationSeconds": 38.2, "strokeStyle": "freestyle", "strokeCount": 22, "distanceMetres": 25},
+    {"index": 1, "startDate": "2026-09-19T08:30:43.450Z", "endDate": "2026-09-19T08:31:25.000Z", "durationSeconds": 41.55, "strokeStyle": "breaststroke", "strokeCount": 23, "distanceMetres": 25}
+  ],
+  "segments": [
+    {"index": 0, "startDate": "2026-09-19T08:30:05.250Z", "endDate": "2026-09-19T08:31:25.000Z", "strokeStyle": "mixed"}
+  ],
+  "pauses": [
+    {"startDate": "2026-09-19T08:40:00.000Z", "endDate": "2026-09-19T08:45:00.000Z"}
+  ],
+  "heartRate": [
+    {"date": "2026-09-19T08:30:10.000Z", "bpm": 130},
+    {"date": "2026-09-19T08:30:15.500Z", "bpm": 132.5}
+  ],
+  "submersion": {
+    "depth": [{"date": "2026-09-19T08:30:20.000Z", "metres": 1.2}],
+    "waterTemperature": [{"date": "2026-09-19T08:30:20.000Z", "celsius": 28.1}]
+  },
+  "device": {"model": "Watch7,12", "osVersion": "27.0", "appVersion": "1.0 (1)"}
+}

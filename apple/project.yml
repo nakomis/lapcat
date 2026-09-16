@@ -1,0 +1,169 @@
+name: Lapcat
+options:
+    bundleIdPrefix: com.nakomis
+    deploymentTarget:
+        iOS: '18.0'
+        watchOS: '26.0'
+    createIntermediateGroups: true
+
+settings:
+    base:
+        SWIFT_VERSION: '5.0'
+        DEVELOPMENT_TEAM: 62YFUFBSFX
+        CODE_SIGN_STYLE: Automatic
+        MARKETING_VERSION: '1.0'
+        CURRENT_PROJECT_VERSION: '1'
+
+configs:
+    Debug Sandbox:      debug
+    Release Sandbox:    release
+    Debug Production:   debug
+    Release Production: release
+
+packages:
+    # Pure-Swift model, sync protocol, uploader and API client. Tested on macOS with `swift test`.
+    LapcatShared:
+        path: LapcatShared
+
+targets:
+    LapcatPhone:
+        type: application
+        platform: iOS
+        deploymentTarget: '18.0'
+        sources:
+            - path: LapcatPhone
+        info:
+            path: LapcatPhone/Resources/Info.plist
+            properties:
+                CFBundleDisplayName: Lapcat
+                CFBundleShortVersionString: $(MARKETING_VERSION)
+                CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+                UILaunchScreen: {}
+                UISupportedInterfaceOrientations:
+                    - UIInterfaceOrientationPortrait
+                ITSAppUsesNonExemptEncryption: false
+                CFBundleURLTypes:
+                    - CFBundleURLSchemes:
+                          - com.nakomis.lapcat
+                # Values injected at build time from the settings below (Recipator pattern)
+                LapcatApiBaseURL: $(LapcatApiBaseURL)
+                LapcatCognitoClientID: $(LapcatCognitoClientID)
+                LapcatCognitoLoginDomain: $(LapcatCognitoLoginDomain)
+        settings:
+            base:
+                PRODUCT_NAME: Lapcat
+                PRODUCT_BUNDLE_IDENTIFIER: com.nakomis.lapcat
+                TARGETED_DEVICE_FAMILY: '1'
+                SUPPORTS_MACCATALYST: NO
+                ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+                CODE_SIGN_ENTITLEMENTS: LapcatPhone/Resources/LapcatPhone.entitlements
+                # Sandbox values. Client ids come from SSM /lapcat/{env}/cognito/client-id
+                # (created by infra/); replace the REPLACE_ placeholders once deployed.
+                LapcatApiBaseURL: https://api.lapcat.sandbox.nakomis.com
+                LapcatCognitoClientID: REPLACE_WITH_SSM_lapcat_sandbox_cognito_client_id
+                LapcatCognitoLoginDomain: login.sandbox.nakomis.com
+            configs:
+                Debug Production:
+                    LapcatApiBaseURL: https://api.lapcat.nakomis.com
+                    LapcatCognitoClientID: REPLACE_WITH_SSM_lapcat_prod_cognito_client_id
+                    LapcatCognitoLoginDomain: login.nakomis.com
+                Release Production:
+                    LapcatApiBaseURL: https://api.lapcat.nakomis.com
+                    LapcatCognitoClientID: REPLACE_WITH_SSM_lapcat_prod_cognito_client_id
+                    LapcatCognitoLoginDomain: login.nakomis.com
+        dependencies:
+            - target: LapcatWatch
+            - package: LapcatShared
+            - sdk: WatchConnectivity.framework
+
+    LapcatWatch:
+        type: application
+        platform: watchOS
+        deploymentTarget: '26.0'
+        sources:
+            - path: LapcatWatch
+        info:
+            path: LapcatWatch/Resources/Info.plist
+            properties:
+                CFBundleDisplayName: Lapcat
+                CFBundleShortVersionString: $(MARKETING_VERSION)
+                CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+                WKApplication: true
+                WKCompanionAppBundleIdentifier: com.nakomis.lapcat
+                WKRunsIndependentlyOfCompanionApp: false
+                WKBackgroundModes:
+                    - workout-processing
+                NSHealthShareUsageDescription: Lapcat reads your heart rate, swimming distance, strokes and energy so each swim's record is complete.
+                NSHealthUpdateUsageDescription: Lapcat saves your pool swims to Health as workouts, with distance, strokes and energy.
+                NSMotionUsageDescription: Lapcat records depth and water temperature during your swim.
+                ITSAppUsesNonExemptEncryption: false
+        settings:
+            base:
+                PRODUCT_NAME: LapcatWatch
+                PRODUCT_BUNDLE_IDENTIFIER: com.nakomis.lapcat.watchkitapp
+                ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+                SKIP_INSTALL: YES
+                # --- Depth & water temperature (LAPC-10) ------------------------------------
+                # Off by default: the shallow-depth entitlement may not be granted yet. Set to YES
+                # (here, or `xcodebuild ... LAPCAT_SUBMERSION=YES`) to sign with the submersion
+                # entitlement and compile in CMWaterSubmersionManager recording.
+                LAPCAT_SUBMERSION: NO
+                LAPCAT_ENTITLEMENTS_NO: LapcatWatch/Resources/LapcatWatch.entitlements
+                LAPCAT_ENTITLEMENTS_YES: LapcatWatch/Resources/LapcatWatch-Submersion.entitlements
+                CODE_SIGN_ENTITLEMENTS: $(LAPCAT_ENTITLEMENTS_$(LAPCAT_SUBMERSION))
+                LAPCAT_SWIFT_CONDITION_NO: ''
+                LAPCAT_SWIFT_CONDITION_YES: LAPCAT_SUBMERSION
+                SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) $(LAPCAT_SWIFT_CONDITION_$(LAPCAT_SUBMERSION))
+        dependencies:
+            - package: LapcatShared
+
+    LapcatPhoneTests:
+        type: bundle.unit-test
+        platform: iOS
+        deploymentTarget: '18.0'
+        sources:
+            - LapcatPhoneTests
+        dependencies:
+            - target: LapcatPhone
+        settings:
+            base:
+                PRODUCT_BUNDLE_IDENTIFIER: com.nakomis.lapcat.tests
+                GENERATE_INFOPLIST_FILE: YES
+                # The host's PRODUCT_NAME is Lapcat, not the target name XcodeGen assumes.
+                TEST_HOST: $(BUILT_PRODUCTS_DIR)/Lapcat.app/Lapcat
+                BUNDLE_LOADER: $(TEST_HOST)
+
+schemes:
+    Lapcat (Sandbox):
+        build:
+            targets:
+                LapcatPhone: all
+                LapcatPhoneTests: [test]
+        run:
+            config: Debug Sandbox
+        test:
+            config: Debug Sandbox
+            targets:
+                - LapcatPhoneTests
+                - package: LapcatShared/LapcatSharedTests
+        archive:
+            config: Release Sandbox
+
+    Lapcat (Production):
+        build:
+            targets:
+                LapcatPhone: all
+        run:
+            config: Debug Production
+        archive:
+            config: Release Production
+
+    LapcatWatch:
+        build:
+            targets:
+                LapcatWatch: all
+        run:
+            config: Debug Sandbox
+        archive:
+            config: Release Sandbox
+

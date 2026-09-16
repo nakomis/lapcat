@@ -1,0 +1,81 @@
+default_platform(:ios)
+
+# Distribution is TestFlight only — there is deliberately no App Store submit lane.
+
+# Default TestFlight "What to Test" notes. Override per build with `fastlane beta notes:"…"`.
+RELEASE_NOTES = <<~NOTES.freeze
+  First Lapcat build.
+
+  On the watch: pick your pool length, tap Swim, and swim. Turn the crown to clear Water Lock, then
+  swipe up and tap End. Your swim syncs to the iPhone and uploads once you're signed in.
+
+  Please check the lap count against what you actually swam.
+NOTES
+
+# App Store Connect API credentials: env vars on CI, local keychain on a dev machine
+# (same keychain entries as Recipator — see recipator/ios/scripts/store-asc-credentials.sh).
+def asc_api_key
+  key_id      = ENV["ASC_KEY_ID"]      || `security find-generic-password -s app-store-connect -a key-id      -w 2>/dev/null`.strip
+  issuer_id   = ENV["ASC_ISSUER_ID"]   || `security find-generic-password -s app-store-connect -a issuer-id   -w 2>/dev/null`.strip
+  key_content = ENV["ASC_KEY_CONTENT"] || `security find-generic-password -s app-store-connect -a key-content -w 2>/dev/null`.strip
+  app_store_connect_api_key(
+    key_id:                key_id,
+    issuer_id:             issuer_id,
+    key_content:           key_content,
+    is_key_content_base64: true,
+  )
+end
+
+# Lapcat.xcodeproj is generated from project.yml and not committed.
+def generate_project
+  sh("cd .. && xcodegen generate")
+end
+
+platform :ios do
+  desc "Run unit tests (shared package on macOS, then the iOS scheme on a simulator)"
+  lane :test do
+    sh("cd ../LapcatShared && swift test")
+    generate_project
+    run_tests(
+      project:     "Lapcat.xcodeproj",
+      scheme:      "Lapcat (Sandbox)",
+      destination: "platform=iOS Simulator,name=iPhone 17",
+      xcargs:      "CODE_SIGNING_ALLOWED=NO",
+    )
+  end
+
+  desc "Build the iPhone app (with embedded watch app) and upload to TestFlight (production scheme)"
+  lane :beta do |options|
+    ensure_git_status_clean
+
+    api_key = asc_api_key
+    generate_project
+
+    # Build number = number of commits — monotonically increasing, no App Store Connect call.
+    # Passed as a build setting so the iPhone and watch apps always carry the same number, and
+    # nothing in git is modified (the project is generated anyway).
+    build_number = `git rev-list HEAD --count`.strip
+
+    # Version = what CI last deployed to prod, from the shared deployment tracker. CI
+    # publishes it to SSM because the tracker API only admits CI roles. Override with
+    # `fastlane beta version:1.2.3`.
+    version = options[:version] || `aws ssm get-parameter --profile nakom.is-admin --region eu-west-2 --name /lapcat/prod/version --query Parameter.Value --output text 2>/dev/null`.strip
+    UI.user_error!("No version: pass version:x.y.z or run `aws sso login` (reads /lapcat/prod/version)") if version.empty?
+    UI.message("Building Lapcat #{version} (#{build_number})")
+
+    build_app(
+      project:       "Lapcat.xcodeproj",
+      scheme:        "Lapcat (Production)",
+      configuration: "Release Production",
+      export_method: "app-store",
+      xcargs:        "MARKETING_VERSION=#{version} CURRENT_PROJECT_VERSION=#{build_number} -allowProvisioningUpdates",
+      export_xcargs: "-allowProvisioningUpdates",
+    )
+
+    upload_to_testflight(
+      api_key:                           api_key,
+      changelog:                         options[:notes] || RELEASE_NOTES,
+      skip_waiting_for_build_processing: true,
+    )
+  end
+end

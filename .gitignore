@@ -19,9 +19,6 @@ apple/fastlane/report.xml
 apple/fastlane/test_output/
 apple/fastlane/README.md
 
-# Secrets — never commit
-apple/Shared/Config/Secrets.swift
-
 # Planning
 PLAN.md
 
