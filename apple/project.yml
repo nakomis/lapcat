@@ -41,6 +41,13 @@ targets:
                 UILaunchScreen: {}
                 UISupportedInterfaceOrientations:
                     - UIInterfaceOrientationPortrait
+                # iPad runs natively (not the scaled-up iPhone window) and needs all four
+                # orientations to take part in Split View / Stage Manager.
+                UISupportedInterfaceOrientations~ipad:
+                    - UIInterfaceOrientationPortrait
+                    - UIInterfaceOrientationPortraitUpsideDown
+                    - UIInterfaceOrientationLandscapeLeft
+                    - UIInterfaceOrientationLandscapeRight
                 ITSAppUsesNonExemptEncryption: false
                 CFBundleURLTypes:
                     - CFBundleURLSchemes:
@@ -53,7 +60,7 @@ targets:
             base:
                 PRODUCT_NAME: Lapcat
                 PRODUCT_BUNDLE_IDENTIFIER: com.nakomis.lapcat
-                TARGETED_DEVICE_FAMILY: '1'
+                TARGETED_DEVICE_FAMILY: '1,2'
                 SUPPORTS_MACCATALYST: NO
                 ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
                 CODE_SIGN_ENTITLEMENTS: LapcatPhone/Resources/LapcatPhone.entitlements
