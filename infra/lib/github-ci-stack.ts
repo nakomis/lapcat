@@ -2,6 +2,9 @@ import * as cdk from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 
+/** Account hosting the shared deployment tracker (nakomis-infra, prod). */
+const DEPLOYMENT_TRACKER_ACCOUNT_ID = '637423226886';
+
 export interface GithubCiStackProps extends cdk.StackProps {
   deployEnv: 'sandbox' | 'prod';
   /** ARN of the GitHub OIDC provider, which already exists in both accounts. */
@@ -75,6 +78,20 @@ export class GithubCiStack extends cdk.Stack {
               actions: ['ssm:PutParameter'],
               resources: [
                 `arn:aws:ssm:${this.region}:${this.account}:parameter/lapcat/${deployEnv}/version`,
+              ],
+            }),
+          ],
+        }),
+        // The shared deployment tracker is an IAM-auth REST API in the prod account.
+        // Its resource policy allow-lists this role, but a *cross-account* caller
+        // (the sandbox role) also needs execute-api:Invoke in its own policy —
+        // without it compute-version/record-deployment get a 403 (blog-pipeline pattern).
+        TrackerInvoke: new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              actions: ['execute-api:Invoke'],
+              resources: [
+                `arn:aws:execute-api:${this.region}:${DEPLOYMENT_TRACKER_ACCOUNT_ID}:*/*/*/deployments/*`,
               ],
             }),
           ],
