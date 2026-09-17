@@ -43,9 +43,9 @@ Info.plist (the Recipator pattern): `LapcatApiBaseURL`, `LapcatCognitoClientID`,
 `LapcatCognitoLoginDomain`. Sandbox is used by the `Debug/Release Sandbox` configurations,
 production by `Debug/Release Production`.
 
-The Cognito client ids are placeholders (`REPLACE_WITH_SSM_…`) until `infra/` is deployed — fill
-them from SSM `/lapcat/{env}/…` in `project.yml` and run `xcodegen generate`. Sign-in shows a
-clear message while a placeholder is in place.
+The Cognito client ids in `project.yml` come from SSM `/lapcat/{env}/cognito/client-id` (they are
+public PKCE client ids, so committing them is fine). If the app clients are ever recreated, update them
+there and run `xcodegen generate`. Sign-in shows a clear message if a placeholder is ever put back.
 
 ## Depth and water temperature (LAPC-10)
 

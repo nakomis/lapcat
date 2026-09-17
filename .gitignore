@@ -31,3 +31,6 @@ dist/
 # Coverage
 coverage/
 lcov.info
+
+# Claude Code worktrees / local settings
+.claude/
