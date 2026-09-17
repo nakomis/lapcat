@@ -39,9 +39,7 @@ function Home() {
     <div className="flex min-h-screen flex-col">
       <AppHeader onSignOut={() => signOut(auth)} />
       <main className="mx-auto w-full max-w-2xl flex-1 p-8">
-        <h1 className="mb-6 text-2xl font-semibold tracking-tight">
-          {email ? `Hello ${email}` : 'Hello'}
-        </h1>
+        <h1 className="mb-6 text-2xl font-normal">{email ? `Hello ${email}` : 'Hello'}</h1>
         <p className="text-muted-foreground rounded-xl border border-dashed p-8 text-center text-sm">
           Your swims will appear here
         </p>
