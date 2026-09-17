@@ -10,15 +10,16 @@ export interface GithubCiStackProps extends cdk.StackProps {
 
 /**
  * The role GitHub Actions assumes to deploy Lapcat. Deliberately narrow: it may
- * assume the CDK bootstrap roles and read this project's own SSM parameters, and
- * nothing else. Everything a deploy actually does happens through the bootstrap
- * roles.
+ * assume the CDK bootstrap roles, read this project's own SSM parameters, and
+ * upload the web portal (S3 sync + CloudFront invalidation). Everything an infra
+ * deploy does happens through the bootstrap roles.
  */
 export class GithubCiStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: GithubCiStackProps) {
     super(scope, id, props);
 
     const { deployEnv, githubOidcProviderArn } = props;
+    const webBucketName = `lapcat-web-${this.account}-${deployEnv}`;
 
     const githubOidc = iam.OpenIdConnectProvider.fromOpenIdConnectProviderArn(
       this, 'GithubOidc', githubOidcProviderArn,
@@ -75,6 +76,26 @@ export class GithubCiStack extends cdk.Stack {
               resources: [
                 `arn:aws:ssm:${this.region}:${this.account}:parameter/lapcat/${deployEnv}/version`,
               ],
+            }),
+          ],
+        }),
+        // `cdk deploy` goes through the bootstrap roles, but the web deploy's
+        // `aws s3 sync --delete` and CloudFront invalidation run as this role
+        // itself. Bucket named by convention (not a WebStack reference), so this
+        // hand-deployed stack stays independent of the app stacks.
+        WebDeploy: new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              actions: ['s3:PutObject', 's3:DeleteObject'],
+              resources: [`arn:aws:s3:::${webBucketName}/*`],
+            }),
+            new iam.PolicyStatement({
+              actions: ['s3:ListBucket'],
+              resources: [`arn:aws:s3:::${webBucketName}`],
+            }),
+            new iam.PolicyStatement({
+              actions: ['cloudfront:CreateInvalidation'],
+              resources: ['*'],
             }),
           ],
         }),

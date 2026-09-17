@@ -4,6 +4,8 @@ import { CertStack } from '../lib/cert-stack';
 import { DataStack } from '../lib/data-stack';
 import { ApiStack } from '../lib/api-stack';
 import { GithubCiStack } from '../lib/github-ci-stack';
+import { WebCertStack } from '../lib/web-cert-stack';
+import { WebStack } from '../lib/web-stack';
 
 const npmEnvironment = process.env.NPM_ENVIRONMENT;
 if (!npmEnvironment) {
@@ -49,6 +51,28 @@ const apiStack = new ApiStack(app, 'LapcatApiStack', {
 });
 apiStack.addDependency(certStack);
 apiStack.addDependency(dataStack);
+
+// CloudFront only accepts certificates from us-east-1.
+const webCertStack = new WebCertStack(app, 'LapcatWebCertStack', {
+  env: { account: accountId, region: 'us-east-1' },
+  deployEnv,
+  crossRegionReferences: true,
+  description: `ACM certificate for lapcat.${isProd ? 'nakomis.com' : 'sandbox.nakomis.com'} (us-east-1, for CloudFront) (${deployEnv})`,
+});
+
+const webStack = new WebStack(app, 'LapcatWebStack', {
+  ...londonEnv,
+  deployEnv,
+  certificate: webCertStack.certificate,
+  crossRegionReferences: true,
+  description: `Lapcat web portal: S3 + CloudFront hosting and Cognito web client (${deployEnv})`,
+});
+
+// ApiStack's JWT authoriser reads the web client ID that WebStack publishes to
+// SSM (/lapcat/{env}/web/client-id), so WebStack must deploy before ApiStack.
+// Reading it by parameter name rather than passing the construct keeps the
+// dependency one-way, with no cross-stack export between them.
+apiStack.addDependency(webStack);
 
 new GithubCiStack(app, 'LapcatGithubCiStack', {
   ...londonEnv,

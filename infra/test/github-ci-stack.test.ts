@@ -105,6 +105,32 @@ describe('GithubCiStack', () => {
     });
   });
 
+  test('role may upload the web portal and invalidate CloudFront', () => {
+    sandboxTemplate.hasResourceProperties('AWS::IAM::Role', {
+      Policies: Match.arrayWith([
+        Match.objectLike({
+          PolicyName: 'WebDeploy',
+          PolicyDocument: {
+            Statement: Match.arrayWith([
+              Match.objectLike({
+                Action: ['s3:PutObject', 's3:DeleteObject'],
+                Resource: 'arn:aws:s3:::lapcat-web-123456789012-sandbox/*',
+              }),
+              Match.objectLike({
+                Action: 's3:ListBucket',
+                Resource: 'arn:aws:s3:::lapcat-web-123456789012-sandbox',
+              }),
+              Match.objectLike({
+                Action: 'cloudfront:CreateInvalidation',
+                Resource: '*',
+              }),
+            ]),
+          },
+        }),
+      ]),
+    });
+  });
+
   test('outputs the role ARN', () => {
     sandboxTemplate.hasOutput('CiRoleArn', {});
   });

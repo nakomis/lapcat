@@ -226,13 +226,21 @@ export class ApiStack extends cdk.Stack {
     swimsBucket.grantRead(getFn);
 
     // ── JWT authoriser ────────────────────────────────────────────────────────
+    // Accepts ID tokens from both the native iOS client (above) and the web
+    // portal client. The web client lives in WebStack and is read back by SSM
+    // parameter *name* rather than passed as a construct, so there is no
+    // cross-stack export to pin the two stacks together; WebStack must simply
+    // deploy first (see apiStack.addDependency(webStack) in bin/lapcat.ts).
+    const webClientId = ssm.StringParameter.valueForStringParameter(
+      this, `/lapcat/${deployEnv}/web/client-id`,
+    );
     const authorizer = new HttpJwtAuthorizer(
       'CognitoAuthorizer',
       `https://cognito-idp.${this.region}.amazonaws.com/${userPoolId}`,
       {
         authorizerName: `lapcat-cognito-${deployEnv}`,
         identitySource: ['$request.header.Authorization'],
-        jwtAudience: [client.userPoolClientId],
+        jwtAudience: [client.userPoolClientId, webClientId],
       },
     );
 
@@ -243,7 +251,9 @@ export class ApiStack extends cdk.Stack {
     });
 
     // ── HTTP API ──────────────────────────────────────────────────────────────
-    // No CORS config — the only client is the native iOS/watchOS app, never a browser.
+    // No CORS config yet — today the only caller is the native iOS/watchOS app.
+    // The web portal (LAPC-12) accepts its tokens already but does not call the
+    // API; CORS for lapcat.{zone} arrives with the graphs that need it.
     const api = new apigwv2.HttpApi(this, 'Api', {
       apiName: `lapcat-api-${deployEnv}`,
       defaultAuthorizer: authorizer,
