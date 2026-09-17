@@ -59,5 +59,8 @@ struct SignInView: View {
             .padding(.horizontal)
             .padding(.bottom, 32)
         }
+        // Keep the sign-in column phone-width on iPad rather than a full-width button.
+        .frame(maxWidth: 480)
+        .frame(maxWidth: .infinity)
     }
 }
