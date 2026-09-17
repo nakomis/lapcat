@@ -83,25 +83,26 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* One Dark palette, matching the live nakostat.nakomis.com (not shadcn's neutral default). */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: #282c34;
+  --foreground: #ffffff;
+  --card: #21252b;
+  --card-foreground: #ffffff;
+  --popover: #21252b;
+  --popover-foreground: #ffffff;
+  --primary: #0d6efd;
+  --primary-foreground: #ffffff;
+  --secondary: #2c313a;
+  --secondary-foreground: #ffffff;
+  --muted: #2c313a;
+  --muted-foreground: rgba(255, 255, 255, 0.6);
+  --accent: #353b45;
+  --accent-foreground: #ffffff;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --border: #3e4451;
+  --input: #3e4451;
+  --ring: #528bff;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
