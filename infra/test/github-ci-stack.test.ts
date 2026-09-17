@@ -131,6 +131,24 @@ describe('GithubCiStack', () => {
     });
   });
 
+  test('role may call the deployment tracker API in the prod account', () => {
+    sandboxTemplate.hasResourceProperties('AWS::IAM::Role', {
+      Policies: Match.arrayWith([
+        Match.objectLike({
+          PolicyName: 'TrackerInvoke',
+          PolicyDocument: {
+            Statement: Match.arrayWith([
+              Match.objectLike({
+                Action: 'execute-api:Invoke',
+                Resource: Match.stringLikeRegexp(':637423226886:\\*/\\*/\\*/deployments/\\*$'),
+              }),
+            ]),
+          },
+        }),
+      ]),
+    });
+  });
+
   test('outputs the role ARN', () => {
     sandboxTemplate.hasOutput('CiRoleArn', {});
   });
