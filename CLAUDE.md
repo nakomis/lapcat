@@ -12,8 +12,8 @@ Plane project: `LAPC` (https://plane.home.nakomis.com). Branches/PRs carry the r
 - **Swim tracking** — `HKWorkoutSession` `.swimming` with `swimmingLocationType = .pool` and `lapLength`;
   laps come from `.lap` workout events on `HKLiveWorkoutBuilder`. Use HealthKit's built-in lap detection,
   not hand-rolled accelerometer turn detection. Water Lock via `WKInterfaceDevice.current().enableWaterLock()`.
-- **Depth / water temperature** — `CMWaterSubmersionManager`, needs the shallow-depth entitlement (LAPC-10).
-  Everything must work without it; the fields are simply absent.
+- **Depth / water temperature** — `CMWaterSubmersionManager` with the shallow-depth entitlement (LAPC-10, enabled
+  on the watch App ID). Everything must still work when no readings arrive; the fields are simply absent.
 - **Sync** — watch keeps each swim's JSON on disk until the iPhone acknowledges a confirmed upload
   (`WCSession.transferFile` → iPhone pending queue → presigned S3 PUT → `POST /swims/{id}` confirm → ack).
 - **Backend** — CDK TypeScript (pnpm) in `infra/`. HTTP API + Node Lambdas, Cognito JWT authoriser on the
@@ -22,7 +22,7 @@ Plane project: `LAPC` (https://plane.home.nakomis.com). Branches/PRs carry the r
   swimId SK) holds the summary/index row.
 - **Distribution** — TestFlight only, via `fastlane beta` in `apple/fastlane`, run locally (Recipator pattern). Config (API URL, Cognito client id/domain) is per-build-configuration in `project.yml` → Info.plist.
 - **Versioning** — shared deployment tracker (`nakomis-deployments`, project key `lapcat`). CI computes the version once per merge, deploys it to sandbox then prod, and publishes it to SSM `/lapcat/{env}/version`; `fastlane beta` stamps `MARKETING_VERSION` from `/lapcat/prod/version`, build number = commit count. Bump with `--bump-minor`/`--bump-major` in the PR description.
-- **Submersion entitlement** — build setting `LAPCAT_SUBMERSION` (default `NO`) picks the entitlements file and Swift flag; see `apple/README.md`.
+- **Submersion entitlement** — build setting `LAPCAT_SUBMERSION` (`YES` since LAPC-10) picks the entitlements file and Swift flag; see `apple/README.md`.
 - **Web portal (LAPC-12)** — `lapcat.nakomis.com` / `lapcat.sandbox.nakomis.com`. Login-only today (graphs later).
   Vite + React 19 + Tailwind 4 + shadcn `ui/` + Biome + Vitest (pnpm) in `web/`, nakostat look and feel.
   `LapcatWebCertStack` (us-east-1 cert) + `LapcatWebStack` (private S3 + OAC, CloudFront with a viewer-request
