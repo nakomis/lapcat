@@ -105,6 +105,19 @@ describe('DataStack — sandbox', () => {
     template.hasOutput('SwimsBucketName', { Value: Match.anyValue() });
     template.hasOutput('SwimsTableName', { Value: Match.anyValue() });
   });
+
+  test('swims bucket allows GET/HEAD from the sandbox web portal and localhost', () => {
+    template.hasResourceProperties('AWS::S3::Bucket', {
+      CorsConfiguration: {
+        CorsRules: Match.arrayWith([
+          Match.objectLike({
+            AllowedMethods: Match.arrayWith(['GET', 'HEAD']),
+            AllowedOrigins: Match.arrayWith(['https://lapcat.sandbox.nakomis.com', 'http://localhost:3000']),
+          }),
+        ]),
+      },
+    });
+  });
 });
 
 describe('DataStack — prod', () => {
@@ -128,5 +141,17 @@ describe('DataStack — prod', () => {
     for (const b of Object.values(buckets) as { DeletionPolicy?: string }[]) {
       expect(b.DeletionPolicy).toBe('Retain');
     }
+  });
+
+  test('prod swims bucket CORS allows only the prod web portal, not localhost', () => {
+    template.hasResourceProperties('AWS::S3::Bucket', {
+      CorsConfiguration: {
+        CorsRules: Match.arrayWith([
+          Match.objectLike({
+            AllowedOrigins: ['https://lapcat.nakomis.com'],
+          }),
+        ]),
+      },
+    });
   });
 });

@@ -143,6 +143,16 @@ describe('ApiStack — sandbox', () => {
     template.hasOutput('ApiUrl', { Value: 'https://api.lapcat.sandbox.nakomis.com' });
     template.hasOutput('CognitoClientId', {});
   });
+
+  test('CORS allows the sandbox web portal and localhost, GET/POST/OPTIONS with Authorization', () => {
+    template.hasResourceProperties('AWS::ApiGatewayV2::Api', {
+      CorsConfiguration: {
+        AllowOrigins: Match.arrayWith(['https://lapcat.sandbox.nakomis.com', 'http://localhost:3000']),
+        AllowMethods: Match.arrayWith(['GET', 'POST', 'OPTIONS']),
+        AllowHeaders: Match.arrayWith(['Authorization', 'Content-Type']),
+      },
+    });
+  });
 });
 
 describe('ApiStack — prod', () => {
@@ -159,6 +169,14 @@ describe('ApiStack — prod', () => {
     template.hasResourceProperties('AWS::SSM::Parameter', {
       Name: '/lapcat/prod/api/url',
       Value: 'https://api.lapcat.nakomis.com',
+    });
+  });
+
+  test('CORS on prod allows only the prod web portal, not localhost', () => {
+    template.hasResourceProperties('AWS::ApiGatewayV2::Api', {
+      CorsConfiguration: Match.objectLike({
+        AllowOrigins: ['https://lapcat.nakomis.com'],
+      }),
     });
   });
 });
