@@ -23,7 +23,7 @@ Plane project: `LAPC` (https://plane.home.nakomis.com). Branches/PRs carry the r
 - **Distribution** — TestFlight only, via `fastlane beta` in `apple/fastlane`, run locally (Recipator pattern). Config (API URL, Cognito client id/domain) is per-build-configuration in `project.yml` → Info.plist.
 - **Versioning** — shared deployment tracker (`nakomis-deployments`, project key `lapcat`). CI computes the version once per merge, deploys it to sandbox then prod, and publishes it to SSM `/lapcat/{env}/version`; `fastlane beta` stamps `MARKETING_VERSION` from `/lapcat/prod/version`, build number = commit count. Bump with `--bump-minor`/`--bump-major` in the PR description.
 - **Submersion entitlement** — build setting `LAPCAT_SUBMERSION` (`YES` since LAPC-10) picks the entitlements file and Swift flag; see `apple/README.md`.
-- **Web portal (LAPC-12)** — `lapcat.nakomis.com` / `lapcat.sandbox.nakomis.com`. Login-only today (graphs later).
+- **Web portal (LAPC-12)** — `lapcat.nakomis.com` / `lapcat.sandbox.nakomis.com`. Swim history and graphs.
   Vite + React 19 + Tailwind 4 + shadcn `ui/` + Biome + Vitest (pnpm) in `web/`, nakostat look and feel.
   `LapcatWebCertStack` (us-east-1 cert) + `LapcatWebStack` (private S3 + OAC, CloudFront with a viewer-request
   SPA-rewrite function and **no** `errorResponses`, Route53, Cognito client `lapcat-web-{env}` + One Dark managed
@@ -32,6 +32,13 @@ Plane project: `LAPC` (https://plane.home.nakomis.com). Branches/PRs carry the r
   so `LapcatWebStack` deploys first. The SPA sends the **ID token** (access tokens carry no `email`).
   Config: `web/scripts/set-config.sh <sandbox|prod|localhost>` → `src/config/config.json` (gitignored).
   Footer version comes from `src/version.json`, overwritten by CI with the tracker version.
+  API CORS (`corsPreflight` on the HTTP API) and S3 CORS (on the swims bucket, for `fetch()`-ing the presigned
+  download URL) allow `https://lapcat.{zone}` plus `http://localhost:3000` on sandbox only — never on prod.
+  Home shows last-30-days stat tiles, a distance-per-week bar chart and a pace-over-time line chart (Recharts,
+  pinned `3.10.1`), plus the swim list; `/swims/$swimId` adds lap splits (coloured by stroke style), heart rate
+  with shaded rest periods, and water temperature/depth when `submersion` is present. Chart colours are the
+  dataviz skill's default categorical palette, re-validated against this app's own dark card surface
+  (`#21252b`) rather than the skill's own — see `web/src/lib/chart-colors.ts`.
 - **Reference implementations** — `~/repos/nakomis/nakostat` (CI/CD, Cognito, web) and `~/repos/nakomis/recipator` (iOS app, fastlane, Cognito PKCE).
 
 ## AWS credentials

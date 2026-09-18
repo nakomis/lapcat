@@ -2,6 +2,7 @@ import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/re
 import Home from '@/routes/Home';
 import LoggedIn from '@/routes/LoggedIn';
 import Logout from '@/routes/Logout';
+import SwimDetail from '@/routes/SwimDetail';
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -25,7 +26,13 @@ const logoutRoute = createRoute({
   component: Logout,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, loggedInRoute, logoutRoute]);
+const swimDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/swims/$swimId',
+  component: SwimDetail,
+});
+
+const routeTree = rootRoute.addChildren([indexRoute, loggedInRoute, logoutRoute, swimDetailRoute]);
 
 export const router = createRouter({ routeTree });
 

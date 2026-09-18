@@ -14,6 +14,7 @@ import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as path from 'path';
 import { Construct } from 'constructs';
+import { webDomain } from './hosted-zones';
 
 export interface ApiStackProps extends cdk.StackProps {
   deployEnv: 'sandbox' | 'prod';
@@ -251,13 +252,23 @@ export class ApiStack extends cdk.Stack {
     });
 
     // ── HTTP API ──────────────────────────────────────────────────────────────
-    // No CORS config yet — today the only caller is the native iOS/watchOS app.
-    // The web portal (LAPC-12) accepts its tokens already but does not call the
-    // API; CORS for lapcat.{zone} arrives with the graphs that need it.
+    // CORS for the web portal (LAPC-12), which fetches /swims and /swims/{id}
+    // from the browser. localhost:3000 (the Vite dev server / Cognito's
+    // localhost callback) is only allowed on sandbox — never on prod.
+    const allowOrigins = [`https://${webDomain(deployEnv)}`];
+    if (deployEnv === 'sandbox') {
+      allowOrigins.push('http://localhost:3000');
+    }
     const api = new apigwv2.HttpApi(this, 'Api', {
       apiName: `lapcat-api-${deployEnv}`,
       defaultAuthorizer: authorizer,
       defaultDomainMapping: { domainName },
+      corsPreflight: {
+        allowOrigins,
+        allowMethods: [apigwv2.CorsHttpMethod.GET, apigwv2.CorsHttpMethod.POST, apigwv2.CorsHttpMethod.OPTIONS],
+        allowHeaders: ['Authorization', 'Content-Type'],
+        maxAge: cdk.Duration.hours(1),
+      },
     });
 
     api.addRoutes({ path: '/swims/{swimId}/upload-url', methods: [apigwv2.HttpMethod.POST], integration: new HttpLambdaIntegration('UploadUrlInt', uploadUrlFn) });
