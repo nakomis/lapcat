@@ -79,3 +79,20 @@ cd apple && fastlane beta          # builds Lapcat (Production), uploads to Test
 
 App Store Connect API key comes from env vars on CI, or the `app-store-connect` keychain entries
 shared with Recipator locally.
+
+The version is read from SSM `/lapcat/prod/version` (profile `nakom.is-admin`, so `aws sso login` first),
+or pass `fastlane beta version:x.y.z`. The build number is the commit count.
+
+### First-time setup (already done for Lapcat, 2026-09-17)
+
+- **App Store Connect app record** (`com.nakomis.lapcat`, SKU `lapcat`, app id `6813074014`) has to be
+  created by hand: the API can't create apps, and `upload_to_testflight` fails with
+  `Couldn't find app 'com.nakomis.lapcat'` until it exists. Xcode registers the bundle ids on the first
+  signed build.
+- **Internal beta group "Internal"** (all builds, tester `ipod@nakomis.com`). Without a group a processed
+  build sits at "Ready for beta testing" and never appears in the TestFlight app.
+- **`fastlane pilot builds` is broken** against the current API (`relationship 'buildDeliveries' does not
+  exist`). To check processing state, query `/v1/builds?filter[app]=6813074014&include=buildBetaDetail`
+  directly with an ES256 JWT built from the keychain entries.
+- **Re-uploading an existing `.ipa`** without rebuilding: `fastlane pilot upload --ipa Lapcat.ipa
+  --api_key_path <json>` (write the JSON from the keychain to a temp file and delete it afterwards).
