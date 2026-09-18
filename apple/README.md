@@ -50,18 +50,17 @@ there and run `xcodegen generate`. Sign-in shows a clear message if a placeholde
 ## Depth and water temperature (LAPC-10)
 
 `CMWaterSubmersionManager` needs the `com.apple.developer.submerged-shallow-depth-and-pressure`
-entitlement, which Apple grants on request. It is **off by default**, and everything works
-without it — the swim record just omits `submersion`.
-
-To switch it on once Apple has granted the entitlement for `com.nakomis.lapcat.watchkitapp`:
-
-1. In `project.yml`, under `LapcatWatch` settings, set `LAPCAT_SUBMERSION: YES`
-   (or pass `LAPCAT_SUBMERSION=YES` to `xcodebuild`/fastlane `xcargs` for a one-off build).
-2. `xcodegen generate`.
+entitlement. It is **on** (since 2026-09-18): "Shallow Depth and Pressure" is a plain capability
+checkbox on the `com.nakomis.lapcat.watchkitapp` App ID in the developer portal (no request to Apple
+needed), and `project.yml` sets `LAPCAT_SUBMERSION: YES`.
 
 That one setting both signs with `LapcatWatch-Submersion.entitlements` and adds the
 `LAPCAT_SUBMERSION` Swift compilation condition, which is what lets `SubmersionRecorder` create a
-`CMWaterSubmersionManager`. Signing fails if the entitlement hasn't actually been granted.
+`CMWaterSubmersionManager`. Set it to `NO` (or pass `LAPCAT_SUBMERSION=NO` to `xcodebuild`) to build
+without it; signing fails if the App ID ever loses the capability.
+
+Everything still works if the watch reports nothing (e.g. no sensor data in a given pool) — the swim
+record just omits `submersion`.
 
 ## Sync
 
