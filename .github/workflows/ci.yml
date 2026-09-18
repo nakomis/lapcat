@@ -19,10 +19,14 @@ jobs:
   changes:
     name: Detect changed paths
     runs-on: ubuntu-latest
+    # Markdown-only changes (READMEs, CLAUDE.md) don't build, bump the version or
+    # open prod gates. `every` means a file must match ALL of a filter's patterns,
+    # so the workflow file gets its own filter and is OR-ed in below.
     outputs:
-      infra: ${{ steps.filter.outputs.infra }}
-      apple: ${{ steps.filter.outputs.apple }}
-      web: ${{ steps.filter.outputs.web }}
+      infra: ${{ steps.filter.outputs.infra == 'true' || steps.filter.outputs.workflow == 'true' }}
+      apple: ${{ steps.filter.outputs.apple == 'true' || steps.filter.outputs.workflow == 'true' }}
+      web: ${{ steps.filter.outputs.web == 'true' || steps.filter.outputs.workflow == 'true' }}
+      any: ${{ steps.filter.outputs.infra == 'true' || steps.filter.outputs.apple == 'true' || steps.filter.outputs.web == 'true' || steps.filter.outputs.workflow == 'true' }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -30,15 +34,18 @@ jobs:
       - uses: dorny/paths-filter@v4
         id: filter
         with:
+          predicate-quantifier: 'every'
           filters: |
             infra:
               - 'infra/**'
-              - '.github/workflows/ci.yml'
+              - '!**/*.md'
             apple:
               - 'apple/**'
-              - '.github/workflows/ci.yml'
+              - '!**/*.md'
             web:
               - 'web/**'
+              - '!**/*.md'
+            workflow:
               - '.github/workflows/ci.yml'
 
   # ── TypeScript / CDK + Lambda ─────────────────────────────────────────────────
@@ -184,10 +191,11 @@ jobs:
   version:
     name: Compute version
     runs-on: ubuntu-latest
-    needs: [synth-infra, apple, web]
+    needs: [changes, synth-infra, apple, web]
     if: |
       always() &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      (needs.changes.outputs.any == 'true' || github.event_name == 'workflow_dispatch') &&
       needs.synth-infra.result != 'failure' && needs.synth-infra.result != 'cancelled' &&
       needs.apple.result != 'failure' && needs.apple.result != 'cancelled' &&
       needs.web.result != 'failure' && needs.web.result != 'cancelled'
