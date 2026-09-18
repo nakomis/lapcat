@@ -114,7 +114,7 @@ targets:
                 # Off by default: the shallow-depth entitlement may not be granted yet. Set to YES
                 # (here, or `xcodebuild ... LAPCAT_SUBMERSION=YES`) to sign with the submersion
                 # entitlement and compile in CMWaterSubmersionManager recording.
-                LAPCAT_SUBMERSION: NO
+                LAPCAT_SUBMERSION: YES
                 LAPCAT_ENTITLEMENTS_NO: LapcatWatch/Resources/LapcatWatch.entitlements
                 LAPCAT_ENTITLEMENTS_YES: LapcatWatch/Resources/LapcatWatch-Submersion.entitlements
                 CODE_SIGN_ENTITLEMENTS: $(LAPCAT_ENTITLEMENTS_$(LAPCAT_SUBMERSION))
