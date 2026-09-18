@@ -7,6 +7,26 @@ import { defineConfig } from 'vite';
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: {
+    rollupOptions: {
+      output: {
+        // Recharts (+ its d3 deps) is most of the bundle and changes far less often than
+        // the app, so give it its own long-cacheable chunk; React likewise.
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return undefined;
+          if (
+            /[\\/]node_modules[\\/](recharts|d3-[^\\/]+|victory-vendor|internmap|decimal\.js-light)[\\/]/.test(
+              id,
+            )
+          ) {
+            return 'charts';
+          }
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return 'react';
+          return undefined;
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
